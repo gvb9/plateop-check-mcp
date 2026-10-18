@@ -61,12 +61,19 @@ describe("tools", () => {
 
   it("passes the language, IP headers and the Authorization header unchanged", async () => {
     rig = await boot({ trustProxy: true });
-    await call("vehicle_check", { plate: "12-ABC-3", country: "nl", language: "en" }, { "X-Real-IP": "203.0.113.9", Authorization: "Bearer abc.def" });
+    await call("vehicle_check", { plate: "12-ABC-3", country: "nl", language: "en" }, { "X-Forwarded-For": "198.51.100.1, 203.0.113.9", Authorization: "Bearer abc.def" });
     const s = rig.fake.seen[0];
     expect(s.path).toBe("/api/rapport/kenteken/12-ABC-3?taal=en");
     expect(s.realIp).toBe("203.0.113.9");
     expect(s.forwardedFor).toBe("203.0.113.9");
     expect(s.authorization).toBe("Bearer abc.def");
+    expect(s.forwardedHost).toBe("nederland.plateop.com");
+  });
+
+  it("ignores a forged X-Real-IP from the caller", async () => {
+    rig = await boot({ trustProxy: true });
+    await call("vehicle_check", { plate: "A", country: "nl" }, { "X-Forwarded-For": "203.0.113.9", "X-Real-IP": "6.6.6.6" });
+    expect(rig.fake.seen[0].realIp).toBe("203.0.113.9");
   });
 
   it("sends no Authorization header when the agent sent none", async () => {

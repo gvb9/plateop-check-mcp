@@ -12,6 +12,7 @@ const MARKETS: Record<string, { markt: string; taal: string; bedrag: number; val
 export interface SeenRequest {
   path: string;
   host?: string;
+  forwardedHost?: string;
   forwardedFor?: string;
   realIp?: string;
   authorization?: string;
@@ -31,6 +32,7 @@ export async function startFakePlateop(): Promise<FakePlateop> {
     seen.push({
       path: req.originalUrl,
       host: req.header("host"),
+      forwardedHost: req.header("x-forwarded-host"),
       forwardedFor: req.header("x-forwarded-for"),
       realIp: req.header("x-real-ip"),
       authorization: req.header("authorization"),

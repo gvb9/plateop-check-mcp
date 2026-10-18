@@ -24,11 +24,10 @@ export async function startServer(cfg: Config, log: (line: string) => void = (l)
   const plateop = new PlateopClient(cfg);
   const salt = cfg.ipSalt ?? randomBytes(32).toString("hex");
 
-  // Same reading as the Plateop app: X-Real-IP first, else the last X-Forwarded-For hop (the one nginx appended).
+  // Behind nginx the last X-Forwarded-For hop is the caller (nginx sets it to $remote_addr). X-Real-IP is not read: nginx does
+  // not overwrite it, so a caller could forge it to dodge the limit.
   const ipOf = (req: Request): string => {
     if (cfg.trustProxy) {
-      const real = req.header("x-real-ip")?.trim();
-      if (real) return real;
       const hops = (req.header("x-forwarded-for") ?? "").split(",").map((h) => h.trim()).filter(Boolean);
       if (hops.length) return hops[hops.length - 1];
     }
