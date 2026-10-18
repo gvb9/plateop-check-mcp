@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Plateop vehicle check: a number plate with a check mark">
+  <!-- Same tokens as the Agent Commons icon, as sRGB: paper oklch(98% 0.004 90), rule oklch(88% 0.008 90), ink oklch(44% 0.13 262). -->
+  <rect x="2" y="2" width="508" height="508" rx="96" fill="#f9f8f5" stroke="#d9d7d2" stroke-width="4"/>
+  <rect x="72" y="168" width="368" height="176" rx="24" fill="none" stroke="#d9d7d2" stroke-width="12"/>
+  <g stroke="#d9d7d2" stroke-width="10" stroke-linecap="round">
+    <path d="M112 256H216M112 296H184"/>
+  </g>
+  <path d="M272 256L312 296L388 208" fill="none" stroke="#284e99" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

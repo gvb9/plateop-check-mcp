@@ -1,0 +1,11 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "com.plateop/plateop-check",
+  "title": "Plateop vehicle check",
+  "description": "Free facts about a used car from the official register (NL, GB, IL, IS, DK) with source and date, plus model inspection statistics.",
+  "version": "0.1.0",
+  "websiteUrl": "https://check.plateop.com",
+  "remotes": [
+    { "type": "streamable-http", "url": "https://check.plateop.com/mcp" }
+  ]
+}
