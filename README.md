@@ -4,7 +4,7 @@ A remote MCP server (Streamable HTTP, stateless) that gives AI agents the free f
 
 Revenue model: every `vehicle_check` answer ends with a link for a person to the paid report (4.95 euro in the Netherlands) on the country host, `https://<host>.plateop.com/analyse/nieuw`, without the plate in the URL. An `Authorization` header sent by the agent is passed to the app unchanged, so a paid tier later needs no change here.
 
-Not deployed yet.
+Deployment: `./server-setup.sh` once, then `./deploy.sh`.
 
 ## Tools
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# DRAFT, not run yet. Deploys plateop-check to the Hetzner server (ssh host "plateop"), same layout as agent-commons.
+# Deploys plateop-check to the Hetzner server (ssh host "plateop"), same layout as agent-commons.
 # Before the first run, make on the server (see README, "Rollout"): user "plateop-check", /srv/plateop-check,
 # /etc/plateop-check/plateop-check.env (root:plateop-check), systemd unit "plateop-check" (PORT=3200) and an nginx
 # site for check.plateop.com that sets X-Real-IP. Run from the project folder: ./deploy.sh
