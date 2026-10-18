@@ -11,7 +11,7 @@ Deployment: `./server-setup.sh` once, then `./deploy.sh`.
 | Tool | What it does | Plateop call |
 |---|---|---|
 | `vehicle_check(plate, country, language?)` | Facts per heading as text, raw JSON as `structuredContent`, then the paid-report line | `/api/rapport/kenteken/{plate}?taal=` |
-| `model_inspection_stats(brand, model, country, language?)` | Model-wide inspection statistics with the citation line | `/open/model/<brand-slug>/<model-slug>.json` |
+| `model_inspection_stats(brand, model, country, language?)` | Per source and age band the 3 most frequent inspection points (the app lists all 300; the answer links to the full JSON), with the citation line | `/open/model/<brand-slug>/<model-slug>.json` |
 
 Countries: `nl` (host nederland), `gb` (uk), `il` (israel), `is` (island), `dk` (danmark). Each call sends `Host` and `X-Forwarded-Host: <host>.plateop.com` (the app reads `Host`; node:http is used because fetch cannot set it), `X-Real-IP` and `X-Forwarded-For` with the agent's IP, and the agent's `Authorization` header if there is one. Timeout 10 s. App errors (400, 404, 429 with Retry-After, 502, 503) become one plain sentence for the agent.
 

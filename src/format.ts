@@ -59,18 +59,89 @@ export function vehicleText(r: VehicleReport, country: Country): string {
   return out.join("\n");
 }
 
-export function modelText(m: ModelStats, country: Country): string {
-  const out: string[] = [`Plateop inspection statistics for ${m.model} (${m.markt}). Generated ${m.gegenereerdOp}.`, ""];
-  if (m.feiten.length === 0) out.push("No statistics published for this model.");
+/** How many inspection points per source and age band the compact answer keeps. The full list (often 300 lines) stays at the JSON URL. */
+const TOP_PER_BAND = 3;
+
+export interface CompactPoint { category: string; count: number; total: number; share: number }
+export interface CompactBand { ages: string; points: CompactPoint[] }
+export interface CompactSource { source: string; asOf: string; bands: CompactBand[]; notes: string[] }
+export interface CompactModel {
+  model: string;
+  canoniek: string;
+  markt: string;
+  generatedAt: string;
+  sources: CompactSource[];
+  generations: ModelStats["generaties"];
+  licence: string;
+  cite: string;
+  modelPage: string;
+  fullJsonUrl: string;
+}
+
+/**
+ * The app's model JSON lists every inspection point per source and age band (hundreds of lines).
+ * An agent needs the picture, not the table: per source and age band the points with the highest
+ * share, plus the link to the full JSON for anyone who wants all of it.
+ */
+export function compactModel(m: ModelStats, country: Country): CompactModel {
+  const bySource = new Map<string, CompactSource>();
   for (const f of m.feiten) {
-    const ratio = f.teller !== undefined && f.noemer !== undefined ? ` (${f.teller} of ${f.noemer})` : "";
-    out.push(`- ${f.kop}${f.waarde ? `: ${f.waarde}` : ""}${ratio}. Source: ${f.bron}, as of ${f.peildatum}.`);
+    let s = bySource.get(f.bron);
+    if (!s) {
+      s = { source: f.bron, asOf: f.peildatum, bands: [], notes: [] };
+      bySource.set(f.bron, s);
+    }
+    const category = f.kop.includes(":") ? f.kop.slice(f.kop.indexOf(":") + 1).trim() : f.kop;
+    if (f.teller === undefined || f.noemer === undefined || f.noemer === 0) {
+      s.notes.push(`${f.kop}${f.waarde ? `: ${f.waarde}` : ""}`);
+      continue;
+    }
+    const ages = /leeftijd ([^,.]+?) jr/.exec(f.waarde ?? "")?.[1] ?? "all ages";
+    let band = s.bands.find((b) => b.ages === ages);
+    if (!band) {
+      band = { ages, points: [] };
+      s.bands.push(band);
+    }
+    band.points.push({ category, count: f.teller, total: f.noemer, share: f.teller / f.noemer });
   }
-  if (m.generaties.length) {
+  for (const s of bySource.values()) {
+    for (const b of s.bands) b.points = b.points.sort((a, z) => z.share - a.share).slice(0, TOP_PER_BAND);
+  }
+  const host = m.bron ? new URL(m.bron).host : `${country}.plateop.com`;
+  return {
+    model: m.model,
+    canoniek: m.canoniek,
+    markt: m.markt,
+    generatedAt: m.gegenereerdOp,
+    sources: [...bySource.values()],
+    generations: m.generaties,
+    licence: m.licentie,
+    cite: m.citeer,
+    modelPage: m.bron,
+    fullJsonUrl: `https://${host}/open/model/${m.canoniek}.json`,
+  };
+}
+
+const pct = (share: number) => `${(share * 100).toFixed(1)}%`;
+
+export function modelText(c: CompactModel, country: Country): string {
+  const out: string[] = [`Plateop inspection statistics for ${c.model} (${c.markt}). Generated ${c.generatedAt}.`, ""];
+  if (c.sources.length === 0) out.push("No statistics published for this model.");
+  for (const s of c.sources) {
+    out.push(`${s.source} (as of ${s.asOf})`);
+    for (const b of s.bands) {
+      const pts = b.points.map((p) => `${p.category} ${pct(p.share)} (${p.count} of ${p.total})`).join("; ");
+      out.push(`- ${b.ages === "all ages" ? "all ages" : `age ${b.ages} yr`}: ${pts}`);
+    }
+    for (const n of s.notes) out.push(`- ${n}`);
+    out.push("");
+  }
+  out.push(`Shown: the ${TOP_PER_BAND} most frequent inspection points per source and age band. Every point: ${c.fullJsonUrl}`);
+  if (c.generations.length) {
     out.push("", "Generations");
-    for (const g of m.generaties) out.push(`- ${g.slug}: ${g.bouwjaren.van ?? "?"} to ${g.bouwjaren.tot ?? "present"}. ${g.url}`);
+    for (const g of c.generations) out.push(`- ${g.slug}: ${g.bouwjaren.van ?? "?"} to ${g.bouwjaren.tot ?? "present"}. ${g.url}`);
   }
-  out.push("", `Licence ${m.licentie}. Cite as: ${m.citeer}`, `Model page: ${m.bron}`);
+  out.push("", `Licence ${c.licence}. Cite as: ${c.cite}`, `Model page: ${c.modelPage}`);
   out.push("", `For one specific car, use vehicle_check; its full report is started at ${reportUrl(country)}.`);
   return out.join("\n");
 }

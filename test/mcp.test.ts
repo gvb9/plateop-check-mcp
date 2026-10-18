@@ -124,10 +124,22 @@ describe("tools", () => {
     const r = await call("model_inspection_stats", { brand: "Volkswagen", model: "Golf", country: "nl" });
     const t = textOf(r);
     expect(rig.fake.seen[0].path).toBe("/open/model/volkswagen/golf.json");
-    expect(t).toContain("1240 of 10000");
+    expect(t).toContain("Afkeurpercentage 12.4% (1240 of 10000)");
+    expect(t).toContain("Meest voorkomend gebrek: Verlichting");
+    expect(t).toContain("https://nederland.plateop.com/open/model/volkswagen/golf.json");
     expect(t).toContain("Bron: Plateop (plateop.com), Volkswagen Golf");
     expect(t).toContain("CC BY 4.0");
     expect((r.structuredContent as { canoniek: string }).canoniek).toBe("volkswagen/golf");
+  });
+
+  it("model_inspection_stats keeps only the top points per source and age band", async () => {
+    rig = await boot();
+    const r = await call("model_inspection_stats", { brand: "many", model: "points", country: "nl" });
+    const t = textOf(r);
+    expect(t).toContain("age 3-5 yr: Verlichting 20.0% (200 of 1000); Remmen 10.0% (100 of 1000); Banden 5.0% (50 of 1000)");
+    expect(t).not.toContain("Ruitenwissers");
+    const s = r.structuredContent as { sources: { bands: { points: unknown[] }[] }[] };
+    expect(s.sources[0].bands[0].points).toHaveLength(3);
   });
 
   it("model_inspection_stats: unknown model and Plateop 429", async () => {

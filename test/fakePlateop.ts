@@ -81,6 +81,19 @@ export async function startFakePlateop(): Promise<FakePlateop> {
     const m = MARKETS[req.header("host") ?? ""];
     if (!m) return void err(res, 404, "onbekende_host");
     if (req.params.merk === "rate") return void err(res, 429, "te_veel_verzoeken", undefined, { "Retry-After": "60" });
+    if (req.params.merk === "many") {
+      // One source, one age band, four points: the answer must keep the three highest shares and drop "Ruitenwissers".
+      const point = (kop: string, teller: number) => ({
+        kop: `Officieel keuringspunt: ${kop}`, waarde: `${teller} van de 1000 Nederlandse keuringsdata, leeftijd 3-5 jr.`,
+        teller, noemer: 1000, bron: "Nederlandse keuringsdata (kentekenregister)", peildatum: "2026-09-03",
+      });
+      return void res.json({
+        model: "Many Points", canoniek: "many/points", markt: m.markt, taal: m.taal, peildata: [],
+        feiten: [point("Banden", 50), point("Verlichting", 200), point("Ruitenwissers", 10), point("Remmen", 100)],
+        generaties: [], licentie: "CC BY 4.0", citeer: "Bron: Plateop (plateop.com), Many Points.",
+        bron: "https://nederland.plateop.com/modellen/many/points", gegenereerdOp: "2026-09-18T00:00:00.000Z",
+      });
+    }
     if (req.params.merk !== "volkswagen" || req.params.model !== "golf.json") return void err(res, 404, "model_niet_gevonden");
     res.json({
       model: "Volkswagen Golf",

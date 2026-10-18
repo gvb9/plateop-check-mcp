@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { modelText, vehicleText } from "./format.js";
+import { compactModel, modelText, vehicleText } from "./format.js";
 import { guide } from "./guide.js";
 import type { Bucket, RateLimiter } from "./limits.js";
 import { COUNTRY_CODES, type Caller, type PlateopClient } from "./plateop.js";
@@ -89,7 +89,9 @@ export function createMcpServer(d: McpDeps): McpServer {
     ({ brand, model, country: c, language: l }) =>
       run("model_inspection_stats", "model", c, async () => {
         const r = await d.plateop.model(c, brand, model, l, d.caller);
-        return r.ok ? ok(modelText(r.data, c), r.data) : fail(r.message);
+        if (!r.ok) return fail(r.message);
+        const compact = compactModel(r.data, c);
+        return ok(modelText(compact, c), compact);
       }),
   );
 
