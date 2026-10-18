@@ -1,4 +1,33 @@
+import http from "node:http";
+import https from "node:https";
 import type { Config } from "./config.js";
+
+interface RawResponse { status: number; retryAfter: string | null; text: string }
+
+/**
+ * GET over node:http instead of fetch, because the Plateop app picks the country host from the
+ * `Host` header (it only reads `X-Forwarded-Host` with TRUST_FORWARDED_HOST=1, which production
+ * does not set) and fetch refuses to send a custom `Host`. Rejects with Error("timeout") when
+ * the app does not answer in time.
+ */
+function rawGet(url: string, host: string, headers: Record<string, string>, timeoutMs: number): Promise<RawResponse> {
+  const u = new URL(url);
+  const lib = u.protocol === "https:" ? https : http;
+  return new Promise((resolve, reject) => {
+    const req = lib.request(u, { method: "GET", headers: { ...headers, host }, timeout: timeoutMs }, (res) => {
+      const chunks: Buffer[] = [];
+      res.on("data", (c: Buffer) => chunks.push(c));
+      res.on("end", () => {
+        const ra = res.headers["retry-after"];
+        resolve({ status: res.statusCode ?? 0, retryAfter: Array.isArray(ra) ? ra[0] : ra ?? null, text: Buffer.concat(chunks).toString("utf8") });
+      });
+      res.on("error", reject);
+    });
+    req.on("timeout", () => req.destroy(new Error("timeout")));
+    req.on("error", reject);
+    req.end();
+  });
+}
 
 /** Country code (the tool argument) to the Plateop land host. Source: Plateop src/lib/hosts.ts. */
 export const COUNTRIES = {
@@ -111,21 +140,21 @@ export class PlateopClient {
       "x-real-ip": caller.ip,
     };
     if (caller.authorization) headers.authorization = caller.authorization;
-    let res: Response;
+    let res: RawResponse;
     try {
-      res = await fetch(this.cfg.plateopBaseUrl + path, { headers, signal: AbortSignal.timeout(this.cfg.timeoutMs) });
+      res = await rawGet(this.cfg.plateopBaseUrl + path, hostName(country), headers, this.cfg.timeoutMs);
     } catch (e) {
-      const timedOut = e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError");
+      const timedOut = e instanceof Error && e.message === "timeout";
       return { ok: false, message: timedOut ? "Plateop did not answer within 10 seconds. Try again shortly." : "Plateop could not be reached. Try again shortly." };
     }
     let body: unknown = null;
     try {
-      body = await res.json();
+      body = JSON.parse(res.text);
     } catch {
       /* not JSON: handled below */
     }
-    if (!res.ok) {
-      return { ok: false, message: describeError(res.status, body as ErrorBody | null, res.headers.get("retry-after"), what) };
+    if (res.status < 200 || res.status >= 300) {
+      return { ok: false, message: describeError(res.status, body as ErrorBody | null, res.retryAfter, what) };
     }
     if (!body || typeof body !== "object") return { ok: false, message: "Plateop sent an answer that is not JSON." };
     return { ok: true, data: body as T };

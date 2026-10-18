@@ -13,7 +13,7 @@ Deployment: `./server-setup.sh` once, then `./deploy.sh`.
 | `vehicle_check(plate, country, language?)` | Facts per heading as text, raw JSON as `structuredContent`, then the paid-report line | `/api/rapport/kenteken/{plate}?taal=` |
 | `model_inspection_stats(brand, model, country, language?)` | Model-wide inspection statistics with the citation line | `/open/model/<brand-slug>/<model-slug>.json` |
 
-Countries: `nl` (host nederland), `gb` (uk), `il` (israel), `is` (island), `dk` (danmark). Each call sends `X-Forwarded-Host: <host>.plateop.com`, `X-Real-IP` and `X-Forwarded-For` with the agent's IP, and the agent's `Authorization` header if there is one. Timeout 10 s. App errors (400, 404, 429 with Retry-After, 502, 503) become one plain sentence for the agent.
+Countries: `nl` (host nederland), `gb` (uk), `il` (israel), `is` (island), `dk` (danmark). Each call sends `Host` and `X-Forwarded-Host: <host>.plateop.com` (the app reads `Host`; node:http is used because fetch cannot set it), `X-Real-IP` and `X-Forwarded-For` with the agent's IP, and the agent's `Authorization` header if there is one. Timeout 10 s. App errors (400, 404, 429 with Retry-After, 502, 503) become one plain sentence for the agent.
 
 Routes: `POST /mcp`, `GET /` (text), `/llms.txt` (guide), `/health`, `/privacy`, `/icon.svg`, `/.well-known/mcp/server-card.json`. `server.json` is for the MCP Registry (`com.plateop/plateop-check`).
 

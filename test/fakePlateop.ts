@@ -30,7 +30,7 @@ export async function startFakePlateop(): Promise<FakePlateop> {
   app.use((req, _res, next) => {
     seen.push({
       path: req.originalUrl,
-      host: req.header("x-forwarded-host"),
+      host: req.header("host"),
       forwardedFor: req.header("x-forwarded-for"),
       realIp: req.header("x-real-ip"),
       authorization: req.header("authorization"),
@@ -42,7 +42,7 @@ export async function startFakePlateop(): Promise<FakePlateop> {
     res.status(status).set(extra).json(bericht ? { fout, bericht } : { fout });
 
   app.get("/api/rapport/kenteken/:plate", (req, res) => {
-    const m = MARKETS[req.header("x-forwarded-host") ?? ""];
+    const m = MARKETS[req.header("host") ?? ""];
     if (!m) return void err(res, 404, "onbekende_host", "Unknown host.");
     const plate = req.params.plate;
     if (plate === "BAD") return void err(res, 400, "ongeldig_kenteken", "Plate format is not valid for this market.");
@@ -69,7 +69,7 @@ export async function startFakePlateop(): Promise<FakePlateop> {
       terugroepModelniveau: m.markt === "dk" ? { status: "model", aantal: 2, bron: { naam: "EU Safety Gate", url: "https://ec.europa.eu/safety-gate" }, peildatum } : null,
       beperkingen: [],
       volledigRapport: {
-        url: `https://${req.header("x-forwarded-host")}/analyse/nieuw/voorproef?vehicleId=abc123`,
+        url: `https://${req.header("host")}/analyse/nieuw/voorproef?vehicleId=abc123`,
         prijs: { bedrag: m.bedrag, valuta: m.valuta },
       },
       licentie: "CC BY 4.0",
@@ -78,7 +78,7 @@ export async function startFakePlateop(): Promise<FakePlateop> {
   });
 
   app.get("/open/model/:merk/:model", (req, res) => {
-    const m = MARKETS[req.header("x-forwarded-host") ?? ""];
+    const m = MARKETS[req.header("host") ?? ""];
     if (!m) return void err(res, 404, "onbekende_host");
     if (req.params.merk === "rate") return void err(res, 429, "te_veel_verzoeken", undefined, { "Retry-After": "60" });
     if (req.params.merk !== "volkswagen" || req.params.model !== "golf.json") return void err(res, 404, "model_niet_gevonden");
