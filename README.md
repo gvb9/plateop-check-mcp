@@ -4,7 +4,7 @@ A remote MCP server (Streamable HTTP, stateless) that gives AI agents the free f
 
 Revenue model: every `vehicle_check` answer ends with a link for a person to the paid report (4.95 euro in the Netherlands) on the country host, `https://<host>.plateop.com/analyse/nieuw`, without the plate in the URL. An `Authorization` header sent by the agent is passed to the app unchanged, so a paid tier later needs no change here.
 
-Deployment: `./server-setup.sh` once, then `./deploy.sh`.
+Deployment: `./server-setup.sh` once, then `./deploy.sh`. Published in the MCP Registry as `com.plateop/plateop-check` 0.1.0 (18 Oct 2026); a new version needs a version bump, `mcp-publisher login http` and `mcp-publisher publish` (see agent-commons docs/VINDBAARHEID.md).
 
 ## Tools
 
