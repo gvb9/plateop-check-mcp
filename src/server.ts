@@ -5,6 +5,7 @@ import type { Server } from "node:http";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import type { Config } from "./config.js";
+import { agentCard } from "./agent-card.js";
 import { guide } from "./guide.js";
 import { RateLimiter } from "./limits.js";
 import { createMcpServer } from "./mcp.js";
@@ -97,6 +98,14 @@ export async function startServer(cfg: Config, log: (line: string) => void = (l)
       documentation: `${baseUrl(req)}/llms.txt`,
     });
   });
+
+  // A2A agent card, on both file names crawlers ask for.
+  const a2a = (req: Request, res: Response) => {
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.json(agentCard(baseUrl(req)));
+  };
+  app.get("/.well-known/agent.json", a2a);
+  app.get("/.well-known/agent-card.json", a2a);
 
   app.get("/llms.txt", (req, res) => {
     if (readGuard(req, res)) text(res, guide());

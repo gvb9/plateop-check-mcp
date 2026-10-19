@@ -44,6 +44,16 @@ describe("http", () => {
     expect(card.transport.endpoint).toBe(`${rig.base}/mcp`);
   });
 
+  it("A2A agent card on both file names, skills equal to the MCP tools, honest about MCP", async () => {
+    rig = await boot();
+    const a = (await (await fetch(`${rig.base}/.well-known/agent.json`)).json()) as { url: string; description: string; skills: { id: string }[] };
+    const b = (await (await fetch(`${rig.base}/.well-known/agent-card.json`)).json()) as { url: string };
+    expect(a.url).toBe(`${rig.base}/mcp`);
+    expect(b.url).toBe(a.url);
+    expect(a.description).toContain("not an A2A message/send endpoint");
+    expect(a.skills.map((s) => s.id).sort()).toEqual(["model_inspection_stats", "vehicle_check"]);
+  });
+
   it("GET /mcp is 405 with Allow: POST", async () => {
     rig = await boot();
     const r = await fetch(`${rig.base}/mcp`);
