@@ -30,7 +30,7 @@ const language = z.string().regex(/^[a-z]{2}$/i).optional().describe("Optional t
 /** Builds an MCP server for ONE request (stateless transport). */
 export function createMcpServer(d: McpDeps): McpServer {
   const server = new McpServer(
-    { name: "plateop-check", title: "Plateop vehicle check", version: "0.1.0" },
+    { name: "plateop-check", title: "Plateop vehicle check", version: "0.1.1" },
     { instructions: "Free facts about a used car from the official register (NL, GB, IL, IS, DK), each with source and date, and model-wide inspection statistics. Read resource plateop://guide." },
   );
 

@@ -3,9 +3,16 @@
   "name": "com.plateop/plateop-check",
   "title": "Plateop vehicle check",
   "description": "Free used-car facts from the official register (NL, GB, IL, IS, DK) with source and date.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "websiteUrl": "https://check.plateop.com",
   "remotes": [
-    { "type": "streamable-http", "url": "https://check.plateop.com/mcp" }
-  ]
+    {
+      "type": "streamable-http",
+      "url": "https://check.plateop.com/mcp"
+    }
+  ],
+  "repository": {
+    "url": "https://github.com/gvb9/plateop-check-mcp",
+    "source": "github"
+  }
 }

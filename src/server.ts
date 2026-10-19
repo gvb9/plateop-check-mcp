@@ -90,7 +90,7 @@ export async function startServer(cfg: Config, log: (line: string) => void = (l)
   app.get("/.well-known/mcp/server-card.json", (req, res) => {
     res.setHeader("Cache-Control", "public, max-age=3600");
     res.json({
-      serverInfo: { name: "plateop-check", title: "Plateop vehicle check", version: "0.1.0" },
+      serverInfo: { name: "plateop-check", title: "Plateop vehicle check", version: "0.1.1" },
       description: "Free facts about a used car from the official register (NL, GB, IL, IS, DK) with source and date, plus model inspection statistics.",
       transport: { type: "streamable-http", endpoint: `${baseUrl(req)}/mcp` },
       authentication: { type: "none" },

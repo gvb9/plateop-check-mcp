@@ -32,7 +32,7 @@ export function agentCard(base: string) {
     preferredTransport: "JSONRPC",
     provider: { organization: "Plateop", url: "https://plateop.com" },
     iconUrl: `${base}/icon.svg`,
-    version: "0.1.0",
+    version: "0.1.1",
     documentationUrl: `${base}/llms.txt`,
     capabilities: { streaming: false, pushNotifications: false, stateTransitionHistory: false },
     securitySchemes: {},
