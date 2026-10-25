@@ -1,4 +1,4 @@
-import express, { type Request, type Response } from "express";
+import express, { type NextFunction, type Request, type Response } from "express";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createHash, randomBytes } from "node:crypto";
 import type { Server } from "node:http";
@@ -143,6 +143,23 @@ export async function startServer(cfg: Config, log: (line: string) => void = (l)
   };
   app.get("/mcp", notAllowed);
   app.delete("/mcp", notAllowed);
+
+  // Last in the chain. A body that is not valid JSON gets a JSON-RPC parse error instead of Express's HTML page, which
+  // showed a stack trace with server paths. Other client errors from the body parser (too large, bad charset) get a
+  // JSON-RPC error with their own status; anything else a plain 500 without details. Client errors are not logged.
+  app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {
+    if (res.headersSent) return next(err);
+    const e = err as { type?: string; status?: number; message?: string };
+    const rpc = (status: number, code: number, message: string) =>
+      void res.status(status).json({ jsonrpc: "2.0", error: { code, message }, id: null });
+    if (e.type === "entity.parse.failed") {
+      return rpc(400, -32700, "Parse error: the body is not valid JSON. Send a JSON-RPC 2.0 message with Content-Type: application/json.");
+    }
+    if (e.type === "entity.too.large") return rpc(413, -32600, "Request too large: the body limit is 64 kB.");
+    if (typeof e.status === "number" && e.status >= 400 && e.status < 500) return rpc(e.status, -32600, `Invalid request: ${e.type ?? "bad body"}.`);
+    console.error(`unhandled error: ${e.message ?? String(err)}`);
+    rpc(500, -32603, "Internal server error");
+  });
 
   const http: Server = await new Promise((resolve) => {
     const s = app.listen(cfg.port, () => resolve(s));

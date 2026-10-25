@@ -54,6 +54,21 @@ describe("http", () => {
     expect(a.skills.map((s) => s.id).sort()).toEqual(["model_inspection_stats", "vehicle_check"]);
   });
 
+  it("answers a body that is not JSON with a JSON-RPC parse error, never an HTML stack trace", async () => {
+    rig = await boot();
+    const post = (body: string) =>
+      fetch(`${rig.base}/mcp`, { method: "POST", headers: { "content-type": "application/json", accept: "application/json, text/event-stream" }, body });
+    const r = await post('{"jsonrpc":"2.0","id":3,"method":');
+    expect(r.status).toBe(400);
+    expect(r.headers.get("content-type")).toMatch(/^application\/json/);
+    const text = await r.text();
+    expect(JSON.parse(text)).toMatchObject({ jsonrpc: "2.0", error: { code: -32700 }, id: null });
+    expect(text).not.toMatch(/node_modules|SyntaxError|<html/i);
+    const big = await post(JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list", params: { pad: "x".repeat(70_000) } }));
+    expect(big.status).toBe(413);
+    expect(((await big.json()) as { error: { code: number } }).error.code).toBe(-32600);
+  });
+
   it("GET /mcp is 405 with Allow: POST", async () => {
     rig = await boot();
     const r = await fetch(`${rig.base}/mcp`);
